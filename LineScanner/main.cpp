@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <cstdlib>
 #include <fstream>
+#include <sstream>
 #include <random>
 #include <string>
 #include <string_view>
@@ -10,8 +11,61 @@
 #include <cassert>
 #include <cstdlib>
 
+#include <windows.h>
+
 namespace {
 
+    //-------------------------------------------------------------------------
+    static void _StartProcess(const std::wstring& executable, const std::wstring& arguments) {
+        STARTUPINFO si = { 0 };
+        PROCESS_INFORMATION pi = { 0 };
+
+        // Set up the STARTUPINFO structure
+        si.cb = sizeof(STARTUPINFO);
+        si.dwFlags = STARTF_USESHOWWINDOW;
+        si.wShowWindow = SW_SHOW;
+
+        // Create the process (Generator or Processor)
+        std::wstring commandLine = executable + L" " + arguments;
+        if (!CreateProcess(
+            NULL,                          // No module name (use command line)
+            &commandLine[0],               // Command line
+            NULL,                          // Process handle not inheritable
+            NULL,                          // Thread handle not inheritable
+            FALSE,                         // Set handle inheritance to FALSE
+            CREATE_NEW_CONSOLE,
+            //DETACHED_PROCESS,              // No creation flags
+            NULL,                          // Use parent's environment block
+            NULL,                          // Use parent's starting directory
+            &si,                           // Pointer to STARTUPINFO structure
+            &pi                            // Pointer to PROCESS_INFORMATION structure
+        )) {
+            std::wcerr << L"CreateProcess failed for " << executable
+                << L" with error: " << GetLastError() << std::endl;
+            return;
+        }
+
+        // Wait for the process to complete
+        WaitForSingleObject(pi.hProcess, INFINITE);
+
+        // Close process and thread handles
+        CloseHandle(pi.hProcess);
+        CloseHandle(pi.hThread);
+    }
+
+    //-------------------------------------------------------------------------
+    static std::wstring _ToWString(const std::string& a_string) {
+        // Get the size required for the wide-character string (including null-terminator)
+        auto size = MultiByteToWideChar(CP_UTF8, 0, a_string.c_str(), -1, nullptr, 0);
+        std::wstring w_string(size, 0);
+
+        // Perform the conversion
+        MultiByteToWideChar(CP_UTF8, 0, a_string.c_str(), -1, &w_string[0], size);
+        return w_string;
+    }
+
+
+    //-------------------------------------------------------------------------
 #ifdef _DEBUG
     static void _PrintArgs(const std::unordered_map<std::string, std::string>& args) {
         for (const auto& [key, val] : args)
@@ -88,11 +142,6 @@ namespace {
 int main(int argc, char* argv[]) {
 
     /*
-    #ifdef _DEBUG
-        _PrintArgs(argc, argv);
-    #endif
-    */
-
     auto args = _Parse(argc, argv);
     if (args.size() != argc - 1)
         return EXIT_FAILURE;
@@ -105,13 +154,28 @@ int main(int argc, char* argv[]) {
         }
         _GenerateTestCSV(std::atoi(args["columns"].c_str()));
     }
+    */
+
+    // Define the paths to your executables
+    constexpr const wchar_t* generatorPath = L"Generator.exe";
+    constexpr const wchar_t* processorPath = L"Processor.exe";
 
 
-/*
-#ifdef _DEBUG
-    _PrintArgs(args);
-#endif
-*/
+    std::stringstream ss;
+    for (int i = 1; i < argc; ++i) {
+        ss << argv[i];
+        if (i < argc-1)
+           ss << " ";
+    }
+    auto wargs = _ToWString(ss.str());
+
+
+    std::cout << "Launching Generator and Processor...\n";
+
+    _StartProcess(generatorPath, wargs);
+    _StartProcess(processorPath, wargs);
+
+    std::cout << "Processes started!\n";
 
     return EXIT_SUCCESS;
 }
