@@ -1,47 +1,69 @@
 // Processor.cpp : This file contains the 'main' function. Program execution begins and ends there.
 //
 
-#include "shared_memory.h"
+#include <shared_data.h>
+#include <utils.h>
 
+#include <array>
+#include <chrono>
 #include <iostream>
+#include <thread>
 
-int wmain(int argc, wchar_t* argv[])
-{
-    std::wcout << "Processor started." << std::endl;
+using namespace std::chrono_literals;
 
-    HANDLE hMapFile, hEvent;
-    SharedMemoryBlock* sharedData = OpenSharedMemory(hMapFile);
-    hEvent = OpenEventSync();
+namespace {
+    static int _get_threshold(std::unordered_map<std::wstring, std::wstring>&& args) {
+        if (args.count(utils::THRESHOLD) > 0)
+            return std::stoi(args[utils::THRESHOLD]);
+        throw std::runtime_error("No threshold value provided.");
+    }
 
-    if (!sharedData || !hEvent) {
-        std::wcerr << L"Processor: Failed to access shared memory or event!" << std::endl;
-        return 1;
+    inline static void _print_context(int threshold) {
+        std::cout << "Threshold: " << threshold << std::endl;
+    }
+
+    static constexpr const std::array<double, 9> kernel = {
+        0.00025177, 0.008666992, 0.078025818, 0.24130249, 0.343757629, 0.24130249, 0.078025818, 0.008666992, 0.000125885
+    };
+
+    // threshold hint:
+    //      min averaged filtered value: 124.027804061529
+    //      max averaged filtered value: 131.1727234194942
+
+} // namespace
+
+int wmain(int argc, wchar_t* argv[]) {
+    std::wcout << "Processor started" << std::endl;
+
+    auto args = utils::_parse_args(argc, argv);
+    auto threshold = _get_threshold(std::move(args));
+    _print_context(threshold);
+
+    /*utils::unique_handle map_file;
+    if (HANDLE hMapFile = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, SharedData::g_name); hMapFile) {
+        map_file.reset(hMapFile);
+    }
+    else {
+        std::wcerr << L"Error opening shared memory\n";
+        return EXIT_FAILURE;
+    }
+
+    utils::unique_sd data;
+    if (auto pData = MapViewOfFile(map_file.get(), FILE_MAP_ALL_ACCESS, 0, 0, sizeof(SharedData)); pData) {
+        data.reset(static_cast<SharedData*>(pData));
+    }
+    else {
+        std::wcerr << L"Error mapping shared memory\n";
+        return EXIT_FAILURE;
     }
 
     while (true) {
-        WaitForEvent(hEvent);  // Wait for Generator
+        int rowIdx = data->rowIndex.load(std::memory_order_acquire);
 
-        if (sharedData->data_ready) {
-            int result = sharedData->num1 + sharedData->num2;
-            std::wcout << L"Processor: Received (" << sharedData->num1 << ", " << sharedData->num2 << L"), Sum = " << result << std::endl;
-            sharedData->data_ready = false;  // Reset flag
-        }
-        // Optionally reset the event for next round if needed
-        ResetEvent(hEvent);
+        data->buffer[rowIdx];
     }
 
-    CloseSharedMemory(hMapFile, sharedData);
-    CloseEvent(hEvent);
-    return 0;
+
+    std::this_thread::sleep_for(10s);*/
+    return EXIT_SUCCESS;
 }
-
-// Run program: Ctrl + F5 or Debug > Start Without Debugging menu
-// Debug program: F5 or Debug > Start Debugging menu
-
-// Tips for Getting Started: 
-//   1. Use the Solution Explorer window to add/manage files
-//   2. Use the Team Explorer window to connect to source control
-//   3. Use the Output window to see build output and other messages
-//   4. Use the Error List window to view errors
-//   5. Go to Project > Add New Item to create new code files, or Project > Add Existing Item to add existing code files to the project
-//   6. In the future, to open this project again, go to File > Open > Project and select the .sln file
