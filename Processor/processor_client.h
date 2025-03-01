@@ -10,8 +10,6 @@ class Client : public IPC::ClientBase<SharedData>
     , public RandomPairProcessor {
 
     using ClientBase = IPC::ClientBase<SharedData>;
-    using data_type = ClientBase::data_type;
-
     using RandProcessor = RandomPairProcessor;
 
 public:
@@ -19,6 +17,9 @@ public:
         , const double& i_threshold);
 
     void Start() override;
+
+private:
+    SharedData* _GetData() const;
 
 private:
     double m_threshold;

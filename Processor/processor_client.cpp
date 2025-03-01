@@ -8,10 +8,15 @@ Client::Client(const std::chrono::nanoseconds& i_ns
 
 //-----------------------------------------------------------------------------
 void Client::Start() {
-    auto processor = Process(GetData<SharedData>());
+    auto processor = Process(_GetData());
 
     while (processor.next()) {
         auto [x, y] = processor.value();
         std::cout << "Client: Asynchronously processed (" << x << ", " << y << ")\n";
     }
+}
+
+//-----------------------------------------------------------------------------
+SharedData* Client::_GetData() const {
+    return reinterpret_cast<SharedData*>(mp_data);
 }
