@@ -1,5 +1,7 @@
 #include "generator.h"
 
+#include <sstream>
+
 //-----------------------------------------------------------------------------
 RandomPairGenerator::RandomPairGenerator(
     const std::optional<std::wstring>& i_file_name /*= std::nullopt*/)
@@ -25,9 +27,10 @@ RandomPairGenerator::TGenerator RandomPairGenerator::Generate() {
         }
     }
     else {
-        while (true) {
+        int i = 0;
+        while (i < 10) {
             co_yield{ distrib(gen), distrib(gen) };
+            ++i;
         }
     }
 }
-

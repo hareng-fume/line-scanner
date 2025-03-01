@@ -6,6 +6,7 @@
 #include <windows.h>
 #include <iostream>
 
+
 namespace IPC {
 
     /*struct HANDLE_DELETER {
@@ -69,52 +70,81 @@ namespace IPC {
         }
     };*/
 
-    //-------------------------------------------------------------------------
-    template <typename TDerivedServer, typename TSharedData>
-    class ServerBase {
-    
+    class ProcessBase {
     public:
-        explicit ServerBase(const std::chrono::nanoseconds& i_ns)
-            : hMapFile(nullptr), pData(nullptr), m_ns(i_ns) {
+        explicit ProcessBase(const std::chrono::nanoseconds& i_ns)
+            : mh_map_file(nullptr), mp_data(nullptr), m_ns(i_ns) {
+        }
+        ProcessBase(const ProcessBase&) = delete;
+        ProcessBase& operator=(const ProcessBase&) = delete;
+
+        ~ProcessBase() {
+            if (mp_data) UnmapViewOfFile(mp_data);
+            if (mh_map_file) CloseHandle(mh_map_file);
         }
 
-        ~ServerBase() {
-            if (pData) UnmapViewOfFile(pData);
-            if (hMapFile) CloseHandle(hMapFile);
-        }
-
-        bool Init() {
-            auto hMapFile = CreateFileMappingW(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, sizeof(TSharedData), TSharedData::NAME);
-            if (!hMapFile) {
-                std::cerr << "CreateFileMapping failed: " << GetLastError() << std::endl;
-                return false;
-            }
-
-            pData = static_cast<TSharedData*>(MapViewOfFile(hMapFile, FILE_MAP_ALL_ACCESS, 0, 0, sizeof(TSharedData)));
-            if (!pData) {
-                std::cerr << "MapViewOfFile failed: " << GetLastError() << std::endl;
-                CloseHandle(hMapFile);
-                return false;
-            }
-
-            return static_cast<TDerivedServer*>(this)->Init();
-        }
-
-        void Start() {
-            static_cast<TDerivedServer*>(this)->Start();
-        }
+        virtual bool Init() = 0;
+        virtual void Start() = 0;
 
     protected:
-        HANDLE hMapFile;
-        TSharedData* pData;
+        HANDLE mh_map_file;
+        void* mp_data;
 
         std::chrono::nanoseconds m_ns;
     };
 
     //-------------------------------------------------------------------------
-    template <typename TSharedData>
-    class ClientBase {
+    template <typename TData>
+    class ServerBase : public ProcessBase {
+    
+    public:
+        explicit ServerBase(const std::chrono::nanoseconds& i_ns)
+            : ProcessBase(i_ns) {
+        }
 
+        bool Init() override {
+            mh_map_file = CreateFileMappingW(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, sizeof(TData), TData::NAME);
+            if (!mh_map_file) {
+                std::cerr << "CreateFileMapping failed: " << GetLastError() << std::endl;
+                return false;
+            }
+
+            mp_data = MapViewOfFile(mh_map_file, FILE_MAP_ALL_ACCESS, 0, 0, sizeof(TData));
+            if (!mp_data) {
+                std::cerr << "MapViewOfFile failed: " << GetLastError() << std::endl;
+                CloseHandle(mh_map_file);
+                return false;
+            }
+
+            return true;
+        }
+    };
+
+    //-------------------------------------------------------------------------
+    template <typename TData>
+    class ClientBase : public ProcessBase {
+
+    public:
+        explicit ClientBase(const std::chrono::nanoseconds& i_ns)
+            : ProcessBase(i_ns) {
+        }
+
+        bool Init() override {
+            mh_map_file = OpenFileMappingW(FILE_MAP_ALL_ACCESS, FALSE, TData::NAME);
+            if (!mh_map_file) {
+                std::cerr << "OpenFileMapping failed: " << GetLastError() << std::endl;
+                return false;
+            }
+
+            mp_data = MapViewOfFile(mh_map_file, FILE_MAP_ALL_ACCESS, 0, 0, sizeof(TData));
+            if (!mp_data) {
+                std::cerr << "MapViewOfFile failed: " << GetLastError() << std::endl;
+                CloseHandle(mh_map_file);
+                return false;
+            }
+
+            return true;
+        }
     };
 
 } // namespace IPC

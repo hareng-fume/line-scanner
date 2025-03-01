@@ -12,7 +12,7 @@ namespace utils {
     inline constexpr const wchar_t* CSV_TEST = L"csv-test";
 
     // COMMON
-    inline constexpr const wchar_t* TIME_LIMIT = L"time-interval";
+    inline constexpr const wchar_t* TIME_LIMIT = L"time-limit";
 
     // PROCESSOR
     inline constexpr const wchar_t* THRESHOLD = L"threshold";

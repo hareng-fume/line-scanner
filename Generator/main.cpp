@@ -6,6 +6,8 @@ using namespace std::chrono_literals;
 
 int wmain(int argc, wchar_t* argv[])
 {
+    std::cout << "Generator started" << std::endl;
+
     auto args = utils::_parse_args(argc, argv);
     auto time_limit = args.contains(utils::TIME_LIMIT) ?
         utils::_parse_duration(args.at(utils::TIME_LIMIT)) : 500ns;
@@ -13,6 +15,7 @@ int wmain(int argc, wchar_t* argv[])
         std::optional<std::wstring>{args.at(utils::CSV_TEST)} : std::nullopt;
 
     Server server(time_limit, csv_path);
+
     if (!server.Init())
         return EXIT_FAILURE;
 

@@ -6,7 +6,7 @@ struct alignas(64) SharedData {
     int x, y;              // (x, y) pair
     std::atomic<int> flag; // 0 = writing, 1 = ready to read
 
-    static constexpr const wchar_t* NAME = L"Global\\RandStreamSharedMemory";
+    static constexpr const wchar_t* NAME = L"Local\\RandStreamSharedMemory";
 };
 
 
