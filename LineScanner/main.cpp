@@ -27,7 +27,6 @@ namespace {
             NULL,                          // Thread handle not inheritable
             FALSE,                         // Set handle inheritance to FALSE
             CREATE_NEW_CONSOLE,
-            //DETACHED_PROCESS,              // No creation flags
             NULL,                          // Use parent's environment block
             NULL,                          // Use parent's starting directory
             &si,                           // Pointer to STARTUPINFO structure
@@ -66,9 +65,8 @@ int wmain(int argc, wchar_t* argv[]) {
     std::wcout << L"Launching Generator and Processor...\n";
 
     HANDLE processes[] = {nullptr, nullptr};
-    _StartProcess(processorPath, cmd.str(), processes[0]);
-    _StartProcess(generatorPath, cmd.str(), processes[1]);
-
+    _StartProcess(generatorPath, cmd.str(), processes[0]);
+    _StartProcess(processorPath, cmd.str(), processes[1]);
 
     // optionally wait for both processes to finish
     WaitForMultipleObjects(2, processes, TRUE, INFINITE);

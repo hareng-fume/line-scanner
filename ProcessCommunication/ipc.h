@@ -96,7 +96,9 @@ namespace IPC {
     //-------------------------------------------------------------------------
     template <typename TData>
     class ServerBase : public ProcessBase {
-    
+    protected:
+        using data_type = TData;
+
     public:
         explicit ServerBase(const std::chrono::nanoseconds& i_ns)
             : ProcessBase(i_ns) {
@@ -133,6 +135,7 @@ namespace IPC {
             mh_map_file = OpenFileMappingW(FILE_MAP_ALL_ACCESS, FALSE, TData::NAME);
             if (!mh_map_file) {
                 std::cerr << "OpenFileMapping failed: " << GetLastError() << std::endl;
+                Sleep(10000);
                 return false;
             }
 
@@ -140,6 +143,7 @@ namespace IPC {
             if (!mp_data) {
                 std::cerr << "MapViewOfFile failed: " << GetLastError() << std::endl;
                 CloseHandle(mh_map_file);
+                Sleep(5000);
                 return false;
             }
 

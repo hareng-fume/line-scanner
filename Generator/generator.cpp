@@ -3,12 +3,20 @@
 #include <sstream>
 
 //-----------------------------------------------------------------------------
+UniformDistr::UniformDistr(int i_min, int i_max)
+    : m_gen(std::random_device()()) // std::random_device is a seed source for the random number engine
+    , m_distrib(i_min, i_max) {}
+
+//-----------------------------------------------------------------------------
+int UniformDistr::Draw() {
+    return m_distrib(m_gen);
+}
+
+//-----------------------------------------------------------------------------
 RandomPairGenerator::RandomPairGenerator(
     const std::optional<std::wstring>& i_file_name /*= std::nullopt*/)
-    : file_mode(i_file_name.has_value())
-    , rd()
-    , gen(rd())
-    , distrib(0, 255)
+    : UniformDistr(0, 255)
+    , file_mode(i_file_name.has_value())
 {
     if (file_mode)
         file.open(i_file_name.value());
@@ -28,8 +36,8 @@ RandomPairGenerator::TGenerator RandomPairGenerator::Generate() {
     }
     else {
         int i = 0;
-        while (i < 10) {
-            co_yield{ distrib(gen), distrib(gen) };
+        while (true) {
+            co_yield{ Draw(), Draw() };
             ++i;
         }
     }

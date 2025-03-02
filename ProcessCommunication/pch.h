@@ -9,5 +9,6 @@
 
 // add headers that you want to pre-compile here
 #include "utils.h"
+#include "shared_data.h"
 
 #endif //PCH_H

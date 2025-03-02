@@ -8,7 +8,18 @@
 #include <optional>
 
 //-----------------------------------------------------------------------------
-class RandomPairGenerator {
+struct UniformDistr {
+public:
+    UniformDistr(int i_min, int i_max);
+    int Draw();
+
+private:
+    std::mt19937 m_gen;
+    std::uniform_int_distribution<int> m_distrib;
+};
+
+//-----------------------------------------------------------------------------
+class RandomPairGenerator : public UniformDistr {
 
     using TGenerator = Generator<std::pair<int, int>>;
 
@@ -20,7 +31,4 @@ public:
 private:
     bool file_mode;
     std::ifstream file;
-    std::random_device rd; // a seed source for the random number engine
-    std::mt19937 gen;      // mersenne_twister_engine seeded with rd()
-    std::uniform_int_distribution<int> distrib;
 };

@@ -8,7 +8,7 @@ using namespace std::chrono_literals;
 
 namespace {
 
-    static constexpr const std::array<double, 9> kernel = {
+    static constexpr const std::array<double, 9> _FILTER = {
         0.00025177, 0.008666992, 0.078025818, 0.24130249, 0.343757629, 0.24130249, 0.078025818, 0.008666992, 0.000125885
     };
 
@@ -29,7 +29,7 @@ int wmain(int argc, wchar_t* argv[]) {
     auto threthold = args.contains(utils::THRESHOLD) ?
         std::stod(args.at(utils::THRESHOLD)) : default_threshold;
 
-    Client client(time_limit, threthold);
+    ClientPairProcessor client(time_limit, threthold);
     if (!client.Init())
         return EXIT_FAILURE;
 
