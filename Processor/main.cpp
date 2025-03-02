@@ -7,16 +7,11 @@
 using namespace std::chrono_literals;
 
 namespace {
-
-    static constexpr const std::array<double, 9> _FILTER = {
-        0.00025177, 0.008666992, 0.078025818, 0.24130249, 0.343757629, 0.24130249, 0.078025818, 0.008666992, 0.000125885
-    };
-
-    // threshold hint:
-    //      min averaged filtered value: 124.027804061529
-    //      max averaged filtered value: 131.1727234194942
+    /* threshold hint :
+          min averaged filtered value: 124.027804061529
+          max averaged filtered value: 131.1727234194942
+    */
     static constexpr const double default_threshold = (131.1727234194942 + 124.027804061529) / 2;
-
 } // namespace
 
 int wmain(int argc, wchar_t* argv[]) {

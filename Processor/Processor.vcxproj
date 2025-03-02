@@ -137,6 +137,7 @@
     <ClCompile Include="processor_client.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="buffer.h" />
     <ClInclude Include="processor.h" />
     <ClInclude Include="processor_client.h" />
   </ItemGroup>

@@ -126,6 +126,9 @@ namespace IPC {
     template <typename TData>
     class ClientBase : public ProcessBase {
 
+    protected:
+        using data_type = TData;
+
     public:
         explicit ClientBase(const std::chrono::nanoseconds& i_ns)
             : ProcessBase(i_ns) {

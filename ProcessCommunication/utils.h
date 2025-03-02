@@ -24,4 +24,11 @@ namespace utils {
     std::wstring _to_wstring(const std::string& a_string);
     std::string _to_astring(const std::wstring& wstr);
 
+
+
+    template <typename T, size_t SIZE>
+    constexpr size_t get_size(T(&)[SIZE]) {
+        return SIZE;
+    }
+
 } // namespace utils

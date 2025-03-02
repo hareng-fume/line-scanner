@@ -1,4 +1,15 @@
 #include "processor_client.h"
+#include "buffer.h"
+
+#include <immintrin.h>
+
+namespace {
+
+    alignas(32) static constexpr const double _FILTER[] = {
+        0.00025177, 0.008666992, 0.078025818, 0.24130249, 0.343757629, 0.24130249, 0.078025818, 0.008666992, 0.000125885
+    };
+
+} // namespace
 
 //-----------------------------------------------------------------------------
 ClientPairProcessor::ClientPairProcessor(const std::chrono::nanoseconds& i_ns
@@ -9,19 +20,26 @@ ClientPairProcessor::ClientPairProcessor(const std::chrono::nanoseconds& i_ns
 //-----------------------------------------------------------------------------
 void ClientPairProcessor::Start() {
 
+    Buffer<utils::get_size(_FILTER)> buffer;
     auto p_data = _GetData();
+
     while (true) {
+
         // wait until the data is ready from the Generator
         while (p_data->processIndex.load(std::memory_order_acquire) != 1)
             _mm_pause();  // Reduce CPU load during waiting
 
         // Process the entire buffer of random pairs (x, y)
         int rowIdx = p_data->rowIndex.load(std::memory_order_relaxed);
-        int x = p_data->buffer[rowIdx][0];
-        int y = p_data->buffer[rowIdx][1];
 
-        // TODO: add filter application
-        std::cout << "Client: Processed (" << x << ", " << y << ")\n";
+        for (int colIdx = 0; colIdx < p_data->cols_value; ++colIdx) {
+            int val = p_data->buffer[rowIdx][colIdx];
+            buffer.Add(val);
+            if (buffer.IsReady()) {
+                double filtered_val = buffer.FilterAVX2(_FILTER);
+                filtered_val < m_threshold ? 0 : 1;
+            }
+        }
 
         // signal that the Processor has consumed the data and the Generator can proceed
         p_data->processIndex.store(0, std::memory_order_release);
